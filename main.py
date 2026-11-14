@@ -1,7 +1,7 @@
 import sys
 import re
 import sqlite3
-
+from about_system import AboutSystemPage
 from datetime import date
 
 from PyQt6.QtWidgets import (
@@ -9,10 +9,10 @@ from PyQt6.QtWidgets import (
     QVBoxLayout, QHBoxLayout, QGridLayout, QFrame,
     QStackedWidget, QLineEdit, QComboBox, QTableWidget,
     QTableWidgetItem, QMessageBox, QHeaderView, QDateEdit,
-    QMenuBar, QStatusBar
+    QStatusBar
 )
 
-from PyQt6.QtCore import Qt, QDate
+from PyQt6.QtCore import QDate
 import database
 
 
@@ -26,6 +26,7 @@ class AttendanceSystem(QMainWindow):
         self.setWindowTitle(
             "Student Attendance Management System - Passang Gyem (08230162)"
         )
+
         self.setMinimumSize(1050, 650)
         self.resize(1200, 720)
 
@@ -34,11 +35,14 @@ class AttendanceSystem(QMainWindow):
 
         self.setStyleSheet("""
             QMainWindow, QWidget {
-                background-color: #F3F6FA;
+                background-color: #E6E6FA;
                 font-family: Arial;
                 font-size: 13px;
             }
-
+            QLabel#Heading {
+                color: #C8A2E8;
+                font-weight: bold;
+            }
             QFrame#Sidebar {
                 background-color: #142B4A;
                 border: none;
@@ -102,7 +106,7 @@ class AttendanceSystem(QMainWindow):
             }
 
             QLabel#Heading {
-                color: #142B4A;
+                color:#C8A2E8;
                 font-size: 23px;
                 font-weight: bold;
             }
@@ -113,7 +117,7 @@ class AttendanceSystem(QMainWindow):
             }
 
             QLabel#CardNumber {
-                color: #142B4A;
+                color: #C8A2E8;
                 font-size: 27px;
                 font-weight: bold;
             }
@@ -128,6 +132,7 @@ class AttendanceSystem(QMainWindow):
     # MENU BAR
 
     def create_menu(self):
+
         menu = self.menuBar()
 
         file_menu = menu.addMenu("File")
@@ -146,6 +151,7 @@ class AttendanceSystem(QMainWindow):
     # MAIN INTERFACE
 
     def create_interface(self):
+
         central = QWidget()
         self.setCentralWidget(central)
 
@@ -168,23 +174,30 @@ class AttendanceSystem(QMainWindow):
         self.dashboard_page = self.create_dashboard_page()
         self.students_page = self.create_students_page()
         self.attendance_page = self.create_attendance_page()
+        self.about_page = AboutSystemPage()
 
         self.stack.addWidget(self.dashboard_page)
         self.stack.addWidget(self.students_page)
         self.stack.addWidget(self.attendance_page)
+        self.stack.addWidget(self.about_page)
 
         nav_buttons = [
             ("Dashboard", 0),
             ("Students", 1),
-            ("Attendance", 2)
+            ("Attendance", 2),
+            ("About System", 3)
         ]
 
         for text, index in nav_buttons:
+
             button = QPushButton(text)
             button.setObjectName("NavButton")
+
             button.clicked.connect(
-                lambda checked=False, i=index: self.stack.setCurrentIndex(i)
+                lambda checked=False, i=index:
+                self.stack.setCurrentIndex(i)
             )
+
             side_layout.addWidget(button)
 
         side_layout.addStretch()
@@ -193,11 +206,14 @@ class AttendanceSystem(QMainWindow):
         main_layout.addWidget(self.stack)
 
         self.setStatusBar(QStatusBar())
-        self.statusBar().showMessage("Student Attendance Management System")
+        self.statusBar().showMessage(
+            "Student Attendance Management System"
+        )
 
     # DASHBOARD PAGE
 
     def create_dashboard_page(self):
+
         page = QWidget()
         layout = QVBoxLayout(page)
         layout.setContentsMargins(25, 25, 25, 25)
@@ -229,12 +245,15 @@ class AttendanceSystem(QMainWindow):
 
         refresh = QPushButton("Refresh Dashboard")
         refresh.clicked.connect(self.update_dashboard)
+
         layout.addWidget(refresh)
 
         return page
 
     def create_card(self, title):
+
         card = QFrame()
+
         card.setStyleSheet("""
             QFrame {
                 background-color: white;
@@ -257,7 +276,9 @@ class AttendanceSystem(QMainWindow):
         return card, number_label
 
     def update_dashboard(self):
+
         today = date.today().isoformat()
+
         total, present, absent, late = database.get_dashboard_counts(today)
 
         self.total_label[1].setText(str(total))
@@ -268,12 +289,14 @@ class AttendanceSystem(QMainWindow):
     # STUDENT PAGE
 
     def create_students_page(self):
+
         page = QWidget()
         layout = QVBoxLayout(page)
         layout.setContentsMargins(25, 25, 25, 25)
 
         heading = QLabel("Student Management")
         heading.setObjectName("Heading")
+
         layout.addWidget(heading)
 
         form = QGridLayout()
@@ -296,11 +319,13 @@ class AttendanceSystem(QMainWindow):
 
         form.addWidget(QLabel("Student Name"), 0, 0)
         form.addWidget(self.name_input, 0, 1)
+
         form.addWidget(QLabel("Student ID"), 0, 2)
         form.addWidget(self.id_input, 0, 3)
 
         form.addWidget(QLabel("Academic Year"), 1, 0)
         form.addWidget(self.year_input, 1, 1)
+
         form.addWidget(QLabel("Gender"), 1, 2)
         form.addWidget(self.gender_input, 1, 3)
 
@@ -331,14 +356,18 @@ class AttendanceSystem(QMainWindow):
         self.student_search.setPlaceholderText(
             "Search by student name or ID..."
         )
+
         self.student_search.textChanged.connect(self.search_student)
+
         layout.addWidget(self.student_search)
 
         self.student_table = QTableWidget()
         self.student_table.setColumnCount(4)
+
         self.student_table.setHorizontalHeaderLabels([
             "Student ID", "Student Name", "Academic Year", "Gender"
         ])
+
         self.prepare_table(self.student_table)
 
         layout.addWidget(self.student_table)
@@ -346,65 +375,90 @@ class AttendanceSystem(QMainWindow):
         return page
 
     def prepare_table(self, table):
+
         table.setEditTriggers(
             QTableWidget.EditTrigger.NoEditTriggers
         )
+
         table.setSelectionBehavior(
             QTableWidget.SelectionBehavior.SelectRows
         )
+
         table.setAlternatingRowColors(True)
+
         table.horizontalHeader().setSectionResizeMode(
             QHeaderView.ResizeMode.Stretch
         )
 
     def load_students(self, rows=None):
+
         if rows is None:
             rows = database.get_students()
 
         self.student_table.setRowCount(0)
 
         for row_data in rows:
+
             row = self.student_table.rowCount()
             self.student_table.insertRow(row)
 
             for column, value in enumerate(row_data):
+
                 self.student_table.setItem(
                     row, column, QTableWidgetItem(str(value))
                 )
 
     def save_student(self):
+
         name = self.name_input.text().strip()
         student_id = self.id_input.text().strip().upper()
+
         year = self.year_input.currentText()
         gender = self.gender_input.currentText()
 
-        if not re.fullmatch(r"[A-Za-z][A-Za-z '\-]{1,49}", name):
+        if not re.fullmatch(r"[A-Za-z][A-Za-z '-]{1,49}", name):
+
             QMessageBox.warning(
-                self, "Invalid Name",
+                self,
+                "Invalid Name",
                 "Enter a name with at least 2 letters. "
                 "Numbers and special symbols are not allowed."
             )
+
             return
 
-        if not re.fullmatch(r"[A-Za-z0-9\-]{3,15}", student_id):
+        if not re.fullmatch(r"[A-Za-z0-9-]{3,15}", student_id):
+
             QMessageBox.warning(
-                self, "Invalid Student ID",
+                self,
+                "Invalid Student ID",
                 "Student ID must contain 3 to 15 letters, numbers or hyphens."
             )
+
             return
 
         try:
+
             if self.editing_student_id:
+
                 database.update_student(
                     self.editing_student_id, name, year, gender
                 )
+
                 QMessageBox.information(
-                    self, "Updated", "Student details updated successfully."
+                    self,
+                    "Updated",
+                    "Student details updated successfully."
                 )
+
             else:
+
                 database.add_student(student_id, name, year, gender)
+
                 QMessageBox.information(
-                    self, "Saved", "Student added successfully."
+                    self,
+                    "Saved",
+                    "Student added successfully."
                 )
 
             self.clear_student_form()
@@ -413,18 +467,25 @@ class AttendanceSystem(QMainWindow):
             self.load_attendance()
 
         except sqlite3.IntegrityError:
+
             QMessageBox.warning(
-                self, "Duplicate ID",
+                self,
+                "Duplicate ID",
                 "This student ID already exists."
             )
 
     def edit_student(self):
+
         row = self.student_table.currentRow()
 
         if row < 0:
+
             QMessageBox.warning(
-                self, "Select Student", "Please select a student to edit."
+                self,
+                "Select Student",
+                "Please select a student to edit."
             )
+
             return
 
         self.editing_student_id = self.student_table.item(row, 0).text()
@@ -432,10 +493,14 @@ class AttendanceSystem(QMainWindow):
         self.id_input.setText(self.editing_student_id)
         self.id_input.setEnabled(False)
 
-        self.name_input.setText(self.student_table.item(row, 1).text())
+        self.name_input.setText(
+            self.student_table.item(row, 1).text()
+        )
+
         self.year_input.setCurrentText(
             self.student_table.item(row, 2).text()
         )
+
         self.gender_input.setCurrentText(
             self.student_table.item(row, 3).text()
         )
@@ -443,12 +508,17 @@ class AttendanceSystem(QMainWindow):
         self.save_student_button.setText("Update Student")
 
     def delete_student(self):
+
         row = self.student_table.currentRow()
 
         if row < 0:
+
             QMessageBox.warning(
-                self, "Select Student", "Please select a student to delete."
+                self,
+                "Select Student",
+                "Please select a student to delete."
             )
+
             return
 
         student_id = self.student_table.item(row, 0).text()
@@ -462,35 +532,48 @@ class AttendanceSystem(QMainWindow):
         )
 
         if answer == QMessageBox.StandardButton.Yes:
+
             database.delete_student(student_id)
+
             self.load_students()
             self.load_attendance()
             self.update_dashboard()
+
             QMessageBox.information(
-                self, "Deleted", "Student deleted successfully."
+                self,
+                "Deleted",
+                "Student deleted successfully."
             )
 
     def clear_student_form(self):
+
         self.name_input.clear()
         self.id_input.clear()
+
         self.id_input.setEnabled(True)
+
         self.year_input.setCurrentIndex(0)
         self.gender_input.setCurrentIndex(0)
+
         self.editing_student_id = None
+
         self.save_student_button.setText("Add Student")
 
     def search_student(self, keyword):
+
         self.load_students(database.search_students(keyword))
 
     # ATTENDANCE PAGE
 
     def create_attendance_page(self):
+
         page = QWidget()
         layout = QVBoxLayout(page)
         layout.setContentsMargins(25, 25, 25, 25)
 
         heading = QLabel("Attendance Recording")
         heading.setObjectName("Heading")
+
         layout.addWidget(heading)
 
         form = QGridLayout()
@@ -509,8 +592,10 @@ class AttendanceSystem(QMainWindow):
 
         form.addWidget(QLabel("Select Student"), 0, 0)
         form.addWidget(self.attendance_student, 0, 1)
+
         form.addWidget(QLabel("Date"), 0, 2)
         form.addWidget(self.attendance_date, 0, 3)
+
         form.addWidget(QLabel("Status"), 1, 0)
         form.addWidget(self.attendance_status, 1, 1)
 
@@ -539,6 +624,7 @@ class AttendanceSystem(QMainWindow):
         self.attendance_search.setPlaceholderText(
             "Search by student name or ID..."
         )
+
         self.attendance_search.textChanged.connect(
             self.filter_attendance
         )
@@ -569,10 +655,12 @@ class AttendanceSystem(QMainWindow):
 
         self.attendance_table = QTableWidget()
         self.attendance_table.setColumnCount(6)
+
         self.attendance_table.setHorizontalHeaderLabels([
             "Record ID", "Student ID", "Student Name",
             "Academic Year", "Date", "Status"
         ])
+
         self.prepare_table(self.attendance_table)
 
         layout.addWidget(self.attendance_table)
@@ -580,54 +668,70 @@ class AttendanceSystem(QMainWindow):
         return page
 
     def refresh_student_selector(self):
+
         self.attendance_student.clear()
+
         self.attendance_student.addItem("Select a student", None)
 
         for student_id, name, year, gender in database.get_students():
+
             self.attendance_student.addItem(
                 f"{name} ({student_id})", student_id
             )
 
     def mark_attendance(self):
+
         student_id = self.attendance_student.currentData()
 
         if not student_id:
+
             QMessageBox.warning(
-                self, "Missing Student", "Please select a student."
+                self,
+                "Missing Student",
+                "Please select a student."
             )
+
             return
 
         selected_date = self.attendance_date.date().toString("yyyy-MM-dd")
         status = self.attendance_status.currentText()
 
         try:
+
             database.mark_attendance(student_id, selected_date, status)
 
             QMessageBox.information(
-                self, "Saved", "Attendance recorded successfully."
+                self,
+                "Saved",
+                "Attendance recorded successfully."
             )
 
             self.load_attendance()
             self.update_dashboard()
 
         except sqlite3.IntegrityError:
+
             QMessageBox.warning(
-                self, "Duplicate Record",
+                self,
+                "Duplicate Record",
                 "Attendance has already been recorded for this student "
                 "on this date. Select the record and use Update Selected."
             )
 
     def load_attendance(self, rows=None):
+
         if rows is None:
             rows = database.get_attendance()
 
         self.attendance_table.setRowCount(0)
 
         for record in rows:
+
             row = self.attendance_table.rowCount()
             self.attendance_table.insertRow(row)
 
             for column, value in enumerate(record):
+
                 self.attendance_table.setItem(
                     row, column, QTableWidgetItem(str(value))
                 )
@@ -635,13 +739,17 @@ class AttendanceSystem(QMainWindow):
         self.refresh_student_selector()
 
     def edit_attendance(self):
+
         row = self.attendance_table.currentRow()
 
         if row < 0:
+
             QMessageBox.warning(
-                self, "Select Record",
+                self,
+                "Select Record",
                 "Please select an attendance record to update."
             )
+
             return
 
         self.editing_attendance_id = int(
@@ -649,93 +757,112 @@ class AttendanceSystem(QMainWindow):
         )
 
         current_status = self.attendance_table.item(row, 5).text()
+
         self.attendance_status.setCurrentText(current_status)
 
-        self.attendance_date.setDate(
-            QDate.fromString(
-                self.attendance_table.item(row, 4).text(),
-                "yyyy-MM-dd"
-            )
-        )
-
-        self.attendance_student.setCurrentIndex(
-            self.attendance_student.findData(
-                self.attendance_table.item(row, 1).text()
-            )
-        )
-
         answer = QMessageBox.question(
-            self, "Update Attendance",
-            "Update this record using the selected status?",
+            self,
+            "Update Attendance",
+            "Update this record's attendance status?",
             QMessageBox.StandardButton.Yes |
             QMessageBox.StandardButton.No
         )
 
         if answer == QMessageBox.StandardButton.Yes:
+
             try:
+
                 database.update_attendance(
                     self.editing_attendance_id,
                     self.attendance_status.currentText()
                 )
+
                 self.load_attendance()
                 self.update_dashboard()
+
                 QMessageBox.information(
-                    self, "Updated", "Attendance updated successfully."
+                    self,
+                    "Updated",
+                    "Attendance updated successfully."
                 )
+
             except sqlite3.Error as error:
-                QMessageBox.warning(self, "Error", str(error))
+
+                QMessageBox.warning(
+                    self,
+                    "Error",
+                    str(error)
+                )
 
         self.editing_attendance_id = None
 
     def delete_attendance(self):
+
         row = self.attendance_table.currentRow()
 
         if row < 0:
+
             QMessageBox.warning(
-                self, "Select Record",
+                self,
+                "Select Record",
                 "Please select an attendance record to delete."
             )
+
             return
 
         record_id = int(self.attendance_table.item(row, 0).text())
 
         answer = QMessageBox.question(
-            self, "Confirm Delete",
+            self,
+            "Confirm Delete",
             "Are you sure you want to delete this attendance record?",
             QMessageBox.StandardButton.Yes |
             QMessageBox.StandardButton.No
         )
 
         if answer == QMessageBox.StandardButton.Yes:
+
             database.delete_attendance(record_id)
+
             self.load_attendance()
             self.update_dashboard()
 
     def filter_attendance(self):
+
         keyword = self.attendance_search.text().strip()
+
         selected_date = self.filter_date.date().toString("yyyy-MM-dd")
+
         status = self.status_filter.currentText()
 
         rows = database.search_attendance(
             keyword, selected_date, status
         )
+
         self.load_attendance(rows)
 
     def clear_attendance_filter(self):
+
         self.attendance_search.clear()
+
         self.filter_date.setDate(QDate.currentDate())
+
         self.status_filter.setCurrentIndex(0)
+
         self.load_attendance()
 
     # OTHER FUNCTIONS
 
     def refresh_all(self):
+
         self.load_students()
         self.load_attendance()
         self.update_dashboard()
+
         self.statusBar().showMessage("Data refreshed", 3000)
 
     def show_about(self):
+
         QMessageBox.about(
             self,
             "About",
@@ -748,6 +875,7 @@ class AttendanceSystem(QMainWindow):
 
 
 if __name__ == "__main__":
+
     app = QApplication(sys.argv)
 
     window = AttendanceSystem()
